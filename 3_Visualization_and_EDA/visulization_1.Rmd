@@ -1,0 +1,213 @@
+---
+title: "Visulization1"
+author: "Yatong Feng"
+date: "10/9/2020"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggridges)
+```
+
+## load the weather data 
+```{r, message=FALSE}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+
+weather_df
+```
+
+## scatterplot
+
+Create my first scatterplot ever.
+
+```{r}
+ggplot(weather_df,aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+New approach, same plot
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, tmax)) +
+  geom_point()
+```
+
+save and edit a plot object
+
+```{r}
+plot_weather = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) 
+
+plot_weather + geom_point(alpha = .5)
+```
+
+## Advanced scatterplot
+
+Start with the same one and made it fancy
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, tmax,color = name)) +
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE)
+```
+
+
+what about the 'aes' placement
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, tmax)) +
+  geom_point(aes(color = name)) +
+  geom_smooth()
+```
+
+facet same thing
+
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, tmax,color = name)) +
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+```
+
+combine some elements and tey a new plot
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+
+
+**Write a code chain that starts with weather_df; focuses only on Central Park, converts temperatures to Fahrenheit, makes a scatterplot of min vs. max temperature, and overlays a linear regression line (using options in geom_smooth()).**
+
+```{r}
+weather_df %>% 
+  filter(name == "CentralPark_NY") %>% 
+  mutate(
+    tmax_fahr = tmax * (9 / 5) + 32,
+    tmin_fahr = tmin * (9 / 5) + 32) %>% 
+  ggplot(aes(x = tmin_fahr, y = tmax_fahr)) +
+  geom_point(alpha = .5) + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Looks like there’s a pretty linear relationship between min and max temperatures in Central Park.
+
+## some small notes
+
+how many geoms have to exist?
+
+You can have whatever geoms you want
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin,tmax,color = name)) +
+  geom_smooth(se = FALSE)
+```
+
+You can use a neat geom!
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin,tmax)) +
+  geom_hex()
+```
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin,tmax)) +
+  geom_bin2d()
+```
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin,tmax)) +
+  geom_density_2d() + 
+  geom_point(alpha = .3)
+```
+
+```{r}
+ggplot(weather_df) + geom_point(aes(x = tmax, y = tmin), color = "blue")
+ggplot(weather_df) + geom_point(aes(x = tmax, y = tmin, color = "blue"))
+```
+
+## univariate plots
+
+histograms
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin)) + 
+  geom_histogram()
+```
+
+add color
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, fill = name)) + 
+  geom_histogram(position = 'dodge')
+```
+
+```{r}
+weather_df %>% 
+  ggplot(aes(tmin, fill = name)) + 
+  geom_histogram(position = 'dodge') +
+  facet_grid(. ~name)
+```
+
+new geometry
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmax, fill = name)) + 
+  geom_density(alpha = .4, adjust = .5, color = "blue")
+```
+
+box plot
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot()
+```
+
+trendy plots
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), alpha = .5) + 
+  stat_summary(fun = "median", color = "blue")
+```
+
+ridgeplots
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmax, y = name)) + 
+  geom_density_ridges(scale = .85)
+```
+
+
+
+
+
