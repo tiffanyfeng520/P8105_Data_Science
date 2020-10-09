@@ -449,6 +449,92 @@ scale_fill_discrete = scale_fill_viridis_d</code></pre>
 ## 10 CentralPark_NY USW00094728 2017-01-10     0   7.8  -6   2017-01-01
 ## # … with 1,085 more rows</code></pre>
 </div>
+<div id="counting-things" class="section level2">
+<h2>counting things</h2>
+<p>count month obs</p>
+<pre class="r"><code>weather_df %&gt;%
+  group_by(month) %&gt;%
+  summarize(n_obs = n())</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre><code>## # A tibble: 12 x 2
+##    month      n_obs
+##    &lt;date&gt;     &lt;int&gt;
+##  1 2017-01-01    93
+##  2 2017-02-01    84
+##  3 2017-03-01    93
+##  4 2017-04-01    90
+##  5 2017-05-01    93
+##  6 2017-06-01    90
+##  7 2017-07-01    93
+##  8 2017-08-01    93
+##  9 2017-09-01    90
+## 10 2017-10-01    93
+## 11 2017-11-01    90
+## 12 2017-12-01    93</code></pre>
+<pre class="r"><code>weather_df %&gt;%
+  group_by(name,month) %&gt;%
+  summarize(n_obs = n())</code></pre>
+<pre><code>## `summarise()` regrouping output by &#39;name&#39; (override with `.groups` argument)</code></pre>
+<pre><code>## # A tibble: 36 x 3
+## # Groups:   name [3]
+##    name           month      n_obs
+##    &lt;chr&gt;          &lt;date&gt;     &lt;int&gt;
+##  1 CentralPark_NY 2017-01-01    31
+##  2 CentralPark_NY 2017-02-01    28
+##  3 CentralPark_NY 2017-03-01    31
+##  4 CentralPark_NY 2017-04-01    30
+##  5 CentralPark_NY 2017-05-01    31
+##  6 CentralPark_NY 2017-06-01    30
+##  7 CentralPark_NY 2017-07-01    31
+##  8 CentralPark_NY 2017-08-01    31
+##  9 CentralPark_NY 2017-09-01    30
+## 10 CentralPark_NY 2017-10-01    31
+## # … with 26 more rows</code></pre>
+<p>we can use <code>count()</code></p>
+<pre class="r"><code>weather_df %&gt;%
+  count(month, name = &quot;n_obs&quot;)</code></pre>
+<pre><code>## # A tibble: 12 x 2
+##    month      n_obs
+##    &lt;date&gt;     &lt;int&gt;
+##  1 2017-01-01    93
+##  2 2017-02-01    84
+##  3 2017-03-01    93
+##  4 2017-04-01    90
+##  5 2017-05-01    93
+##  6 2017-06-01    90
+##  7 2017-07-01    93
+##  8 2017-08-01    93
+##  9 2017-09-01    90
+## 10 2017-10-01    93
+## 11 2017-11-01    90
+## 12 2017-12-01    93</code></pre>
+<p><strong>Never</strong> use base R’s <code>table</code></p>
+<pre class="r"><code>weather_df %&gt;%
+  pull(month) %&gt;% 
+  table()</code></pre>
+<p>other helpful counters</p>
+<pre class="r"><code>weather_df %&gt;%
+  group_by(month) %&gt;%
+  summarize(
+    n_obs = n(),
+    n_days = n_distinct(date))</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre><code>## # A tibble: 12 x 3
+##    month      n_obs n_days
+##    &lt;date&gt;     &lt;int&gt;  &lt;int&gt;
+##  1 2017-01-01    93     31
+##  2 2017-02-01    84     28
+##  3 2017-03-01    93     31
+##  4 2017-04-01    90     30
+##  5 2017-05-01    93     31
+##  6 2017-06-01    90     30
+##  7 2017-07-01    93     31
+##  8 2017-08-01    93     31
+##  9 2017-09-01    90     30
+## 10 2017-10-01    93     31
+## 11 2017-11-01    90     30
+## 12 2017-12-01    93     31</code></pre>
+</div>
 
 
 
