@@ -208,6 +208,24 @@ weather_df %>%
 ```
 
 
+## save and embed
 
+save
+```{r}
+weather_plot = 
+  ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) 
 
+ggsave("./result/weather_plot.pdf", weather_plot, width = 8, height = 5)
+```
+
+embeding
+
+```{r, fig.width=6, fig.height=3}
+weather_plot
+```
+
+```{r, fig.width=12, fig.height=6}
+weather_plot
+```
 
