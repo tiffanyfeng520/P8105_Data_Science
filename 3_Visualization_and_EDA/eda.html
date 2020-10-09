@@ -535,6 +535,39 @@ scale_fill_discrete = scale_fill_viridis_d</code></pre>
 ## 11 2017-11-01    90     30
 ## 12 2017-12-01    93     31</code></pre>
 </div>
+<div id="a-digression-on-22-tables" class="section level2">
+<h2>A digression on 2*2 tables</h2>
+<pre class="r"><code>weather_df %&gt;% 
+  filter(name != &#39;Waikiki_HA&#39;) %&gt;% 
+  mutate(
+    cold = case_when(
+      tmax &lt;  5 ~ &quot;cold&quot;,
+      tmax &gt;= 5 ~ &quot;not_cold&quot;,
+      TRUE      ~ &quot;&quot;
+  )) %&gt;% 
+  group_by(name, cold) %&gt;% 
+  summarize(count = n())</code></pre>
+<pre><code>## `summarise()` regrouping output by &#39;name&#39; (override with `.groups` argument)</code></pre>
+<pre><code>## # A tibble: 4 x 3
+## # Groups:   name [2]
+##   name           cold     count
+##   &lt;chr&gt;          &lt;chr&gt;    &lt;int&gt;
+## 1 CentralPark_NY cold        44
+## 2 CentralPark_NY not_cold   321
+## 3 Waterhole_WA   cold       172
+## 4 Waterhole_WA   not_cold   193</code></pre>
+<pre class="r"><code>weather_df %&gt;% 
+  filter(name != &quot;Waikiki_HA&quot;) %&gt;% 
+  mutate(cold = case_when(
+    tmax &lt;  5 ~ &quot;cold&quot;,
+    tmax &gt;= 5 ~ &quot;not_cold&quot;,
+    TRUE     ~ &quot;&quot;
+  )) %&gt;% 
+  janitor::tabyl(name, cold)</code></pre>
+<pre><code>##            name cold not_cold
+##  CentralPark_NY   44      321
+##    Waterhole_WA  172      193</code></pre>
+</div>
 
 
 
