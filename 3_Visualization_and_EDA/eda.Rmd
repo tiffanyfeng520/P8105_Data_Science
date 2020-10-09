@@ -46,4 +46,12 @@ weather_df =
 weather_df
 ```
 
+## `group_by`
+
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>% 
+  ungroup()
+```
 
