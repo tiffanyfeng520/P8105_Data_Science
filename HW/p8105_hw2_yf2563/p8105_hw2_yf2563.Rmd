@@ -1,0 +1,333 @@
+---
+title: "p8105_hw2_yf2563"
+author: "Yatong Feng"
+date: "9/30/2020"
+output: github_document
+---
+
+```{r setup, message=FALSE}
+#load packages
+library(tidyverse)
+library(readxl)
+```
+
+## Problem 1
+
+- specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel
+- use reasonable variable names
+- omit rows that do not include dumpster-specific data
+- round the number of sports balls to the nearest integer and converts the result to an integer variable (using as.integer)
+
+First, define a path and read the dataset
+
+```{r}
+path_to_data = './data/Trash-Wheel-Collection-Totals-8-6-19.xlsx'
+trashwheel_df = 
+	read_xlsx(
+		path = path_to_data,
+		sheet = "Mr. Trash Wheel",
+		range = cell_cols("A:N")) %>% 
+	janitor::clean_names() %>% 
+	drop_na(dumpster) %>% 
+	mutate(
+		sports_balls = round(sports_balls, digits = 0),
+		sports_balls = as.integer(sports_balls)
+	) %>% 
+  relocate(dumpster,month,year,date,sports_balls)
+trashwheel_df
+```
+
+Read and clean precipitation data for 2017 and 2018. 
+
+- omit rows without precipitation data and add a variable year
+
+```{r}
+# data for 2018
+precip_2018 = 
+	read_excel(
+		path = path_to_data,
+		sheet = "2018 Precipitation",
+		range = "A2:B14"
+	) %>% 
+	janitor::clean_names() %>% 
+	drop_na(total) %>% 
+	mutate(year = 2018) %>% 
+	relocate(year)
+```
+
+```{r}
+# data for 2017
+precip_2017 = 
+	read_excel(
+		path = path_to_data,
+		sheet = "2017 Precipitation",
+		range = "A2:B14"
+	) %>% 
+	janitor::clean_names() %>% 
+	drop_na(total) %>% 
+	mutate(year = 2017) %>% 
+	relocate(year)
+```
+
+- combine precipitation datasets and convert month to a character variable
+
+```{r}
+month_df = 
+	tibble(
+		month = 1:12,
+		month_name = month.name
+	)
+precip_df = 
+	bind_rows(precip_2018, precip_2017)
+
+precip_df =
+	left_join(precip_df, month_df, by = "month") %>% 
+  select(-month) %>% 
+  rename(month = month_name) %>%
+  relocate(year, month)
+
+precip_df
+```
+
+
+### Summary of the data:
+
+```{r}
+summary(trashwheel_df)
+summary(precip_df)
+```
+
+
+The first dataset is about the information from the Mr. Trashwheel trash collector in Baltimore, Maryland:
+
+- After filtering, there are a total of `r nrow(trashwheel_df)` rows and `r ncol(trashwheel_df)` columns. 
+- The variables include `r names(trashwheel_df)`
+
+The second dataset is about the month precipitation in 2017 and 2018:
+
+- After filtering, there are a total of `r nrow(precip_df)` rows and `r ncol(precip_df)` columns. 
+- The variables include `r names(precip_df)`
+- The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
+- The median number of sports balls found in a dumpster in 2018 was `r trashwheel_df %>% filter(year == 2018) %>% pull(sports_balls) %>% median()`
+- The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+- The total precipitation in 2017 was `r precip_df %>% filter(year == 2017) %>% pull(total) %>% sum()` inches.
+
+## Problem 2
+
+Read and clean the data:
+
+- retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance
+- Convert the entry variable from character (YES vs NO) to a logical variable (the ifelse or recode function may be useful).
+
+```{r, message=FALSE}
+path_prob2 = './data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv'
+
+subway_df =
+  read_csv(path_prob2) %>%
+  janitor::clean_names() %>% 
+  select(line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) %>%
+  mutate(entry = recode(entry, "YES" = T, "NO" = F))
+
+subway_df
+```
+
+### Summary for the NYC subway data
+
+The data set contains information related to each entrance and exit for each subway station in NYC:
+
+- The data cleaning procedure include:
+  - Read the data through read_csv()
+  - Clean the column names through clean_names()
+  - Retain the required variables through select()
+  - Convert the entry variable from character (YES vs NO) to a logical variable through recode()
+- After filtering, there are a total of `r nrow(subway_df)` rows and `r ncol(subway_df)` columns, thus the dimension of the dataset is `r dim(subway_df)`.
+- The variables include `r names(subway_df)`
+- This data is not tidy since the data type of variables route 1 - 11 contains both chr and dbl
+
+
+
+### Answer the following questions using these data:
+
+##### 1. How many distinct stations are there? 
+
+```{r}
+question1_df =
+  subway_df %>% 
+  distinct(line, station_name, .keep_all = T)
+```
+
+Thus, there are `r nrow(question1_df)` distinct stations
+
+
+##### 2. How many stations are ADA compliant?
+
+```{r}
+question2_df = 
+  question1_df %>% 
+  filter(ada == TRUE)
+```
+
+Thus, `r nrow(question2_df)` stations are ADA compliant
+
+##### 3. What proportion of station entrances / exits without vending allow entrance?
+
+```{r}
+question3_without_vending = 
+  subway_df %>% 
+  filter(vending == "NO")
+
+question3_without_vending_allow_entrance = 
+  subway_df %>% 
+  filter(vending == "NO") %>% 
+  filter(entry == T)
+
+question3_proportion = nrow(question3_without_vending_allow_entrance) / nrow(question3_without_vending)
+```
+
+Thus, the proportion of station entrances / exits without vending allow entrance is `r question3_proportion`
+
+
+Reformat data so that route number and route name are distinct variables.
+```{r}
+reformat_subway_df =
+  question1_df %>%
+  mutate(route8 = as.character(route8),
+         route9 = as.character(route9),
+         route10 = as.character(route10),
+         route11 = as.character(route11)) %>%
+  pivot_longer(col = route1:route11,
+               names_to = "route_name", 
+               values_to = "route_number") %>%
+  arrange(route_name, route_number)
+reformat_subway_df
+```
+
+
+##### 4. How many distinct stations serve the A train? 
+```{r}
+question4_df =
+  question1_df %>% 
+  filter(route1 == "A"|route2 =="A"|route3 == "A"|route4 =="A"|
+           route5 == "A"|route6 =="A"|route7 == "A"|route8 =="A"|
+           route9 == "A"|route10 =="A"|route11 =="A")
+```
+
+Thus, there are `r nrow(question4_df)` distinct stations serve the A train
+
+##### 5.Of the stations that serve the A train, how many are ADA compliant?
+
+```{r}
+question5_df = 
+  question4_df %>% 
+  filter(ada == TRUE)
+```
+
+Thus, Of the stations that serve the A train, `r nrow(question5_df)` are ADA compliant.
+
+## Problem 3
+
+First, clean the data in pols-month.csv. 
+
+- Use separate() to break up the variable mon into integer variables year, month, and day
+- replace month number with month name
+- create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
+
+```{r, message=FALSE}
+path_pols_month = "./data/pols-month.csv"
+
+pols_month_df = 
+  read_csv(path_pols_month) %>%
+  janitor::clean_names() %>%
+  separate(mon,c("year","month","day")) %>%
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>%
+  mutate(month = recode(month, `1` = "Jan", `2` = "Feb", `3` = "Mar", `4` = "Apr", `5` = "May" , `6`= "Jun", `7` = "Jul", `8` = "Aug", `9` = "Sep", `10` = "Oct", `11` = "Nov", `12` = "Dec")) %>%
+  mutate(president = ifelse(prez_dem == 1, "dem", "gop")) %>%
+  select(-prez_dem,-prez_gop,-day) %>%
+  arrange(desc(row_number()))
+
+pols_month_df
+```
+
+
+Second, clean the data in snp.csv using a similar process to the above. 
+
+- For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.
+
+```{r, message=FALSE}
+path_snp = './data/snp.csv'
+
+snp_df = 
+  read_csv(path_snp) %>%
+  janitor::clean_names() %>%
+  separate(date,c("month","day","year")) %>%
+  mutate(
+    year = as.integer(year), 
+    month = as.integer(month), 
+    day = as.integer(day)) %>%
+  mutate(month = recode(month, `1` = "Jan", `2` = "Feb", `3` = "Mar", `4` = "Apr", `5` = "May" , `6`= "Jun", `7` = "Jul", `8` = "Aug", `9` = "Sep", `10` = "Oct", `11` = "Nov", `12` = "Dec")) %>%
+  select(year,month,close)
+
+snp_df
+```
+
+Third, tidy the unemployment data.
+
+- Switching from “wide” to “long” format
+- Ensuring that key variables have the same name and take the same values.
+
+```{r, message=FALSE}
+path_unemployment = './data/unemployment.csv'
+
+unemployment_df = 
+  read_csv(path_unemployment) %>%  
+  pivot_longer(Jan:Dec,
+               names_to = "month", 
+               values_to = "unemployment") %>%
+  select(year = Year, everything()) %>%
+  arrange(desc(row_number()))
+
+unemployment_df
+```
+
+Join the datasets by merging snp into pols, and merging unemployment into the result.
+
+```{r}
+merge_df = left_join(pols_month_df, snp_df, by = c("year","month"))
+
+merge_df = left_join(merge_df, unemployment_df, by = c("year","month"))
+
+merge_df
+```
+
+### Summary for the three datasets
+
+
+The first dataset is pols_month:
+
+- After filtering, there are a total of `r nrow(pols_month_df)` rows and `r ncol(pols_month_df)` columns, thus the dimension is `r dim(pols_month_df)`.
+- The variables include `r names(pols_month_df)`
+- In this dataset, 'dem' means democratic party, 'gop' means republican party
+- The variables of 'gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem' represents the number of governors or senators from republican or democratic party
+- The range of years is `r range(pols_month_df$year)`
+
+The second dataset is snp:
+
+- After filtering, there are a total of `r nrow(snp_df)` rows and `r ncol(snp_df)` columns, thus the dimension is `r dim(snp_df)`.
+- The variables include `r names(snp_df)`
+- The range of years is `r range(snp_df$year)`
+
+The third dataset is about unemployment:
+
+- After filtering, there are a total of `r nrow(unemployment_df)` rows and `r ncol(unemployment_df)` columns, thus the dimension is `r dim(unemployment_df)`.
+- The variables include `r names(unemployment_df)`
+- The range of years is `r range(unemployment_df$year)`
+
+The resulting dataset is the merge of all of the three datasets:
+
+
+- After filtering, there are a total of `r nrow(merge_df)` rows and `r ncol(merge_df)` columns, thus the dimension is `r dim(merge_df)`.
+- The variables include `r names(merge_df)`
+- The range of years is `r range(merge_df$year)`
+
+
+
